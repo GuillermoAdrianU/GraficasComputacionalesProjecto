@@ -7,7 +7,7 @@ La propuesta es una construcción de un mapa utilizando datos para obtener la in
 https://www.youtube.com/watch?v=zUHicaRTlxg
 
 <p>
-  <img src="Mapa.png" width="350" alt="accessibility text">
+  <img src="img\Mapa.png" width="350" alt="accessibility text">
 </p>
 
 
@@ -15,7 +15,7 @@ Propuesta 2 (Una Animación que se ejecute al entrar a la página):
 La idea es que cuando entras a la pagina se vea una pequeña animación la cual estará pidiendo al usuario mover el mouse a ciertas lugares para completar secciones de la animación de esta manera el usuario se sienta que es parte de la misma, además de la animación se buscaría que tuviera algunos efectos de sonidos para que no se sienta sola y hacer las interacciones mejor con los usuarios, un ejemplo de esto sería la siguiente página: A Short Journey en donde se pueden apreciar algunos de los elementos que se buscaría hacer con la pagina, solo que seria a una escala menor.
 
 <p>
-  <img src="pikachu.jpg" width="350" alt="accessibility text">
+  <img src="img\pikachu.jpg" width="350" alt="accessibility text">
 </p>
 
 
@@ -29,6 +29,6 @@ Por otro lado también se agregaran 3 poderes aleatoriamente que en caso de coli
 Para este juego se creará más de un nivel, con un algoritmo generando las barras aleatorias, lo único que cambia es la forma de las barritas y la cantidad de barras por nivel
 
 <p>
-  <img src="ladrillo.png" width="350" alt="accessibility text">
+  <img src="img\ladrillo.png" width="350" alt="accessibility text">
 </p>
 
