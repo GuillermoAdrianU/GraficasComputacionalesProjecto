@@ -12,7 +12,7 @@ https://www.youtube.com/watch?v=zUHicaRTlxg
 
 
 Propuesta 2 (Una Animación que se ejecute al entrar a la página):
-La idea es que cuando entras a la pagina se vea una pequeña animación la cual estará pidiendo al usuario mover el mouse a ciertas lugares para completar secciones de la animación de esta manera el usuario se sienta que es parte de la misma, además de la animación se buscaría que tuviera algunos efectos de sonidos para que no se sienta sola y hacer las interacciones mejor con los usuarios, un ejemplo de esto sería la siguiente página: A Short Journey en donde se pueden apreciar algunos de los elementos que se buscaría hacer con la pagina, solo que seria a una escala menor.
+La idea es que cuando entras a la pagina se vea una pequeña animación la cual estará pidiendo al usuario mover el mouse a ciertas lugares para completar secciones de la animación de esta manera el usuario se sienta que es parte de la misma, además de la animación se buscaría que tuviera algunos efectos de sonidos para que no se sienta sola y hacer las interacciones mejor con los usuarios, un ejemplo de esto sería la siguiente página: A Short Journey(http://www.ashortjourney.com/) en donde se pueden apreciar algunos de los elementos que se buscaría hacer con la pagina, solo que seria a una escala menor.
 
 <p>
   <img src="img\pikachu.jpg" width="350" alt="accessibility text">
