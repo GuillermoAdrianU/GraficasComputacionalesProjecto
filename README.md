@@ -32,3 +32,14 @@ Para este juego se creará más de un nivel, con un algoritmo generando las barr
   <img src="img\ladrillo.png" width="350" alt="accessibility text">
 </p>
 
+# Diseños del Juego planeado
+
+En la siguiente imagen es el diseño general de varios de los aspectos del juego
+<p>
+  <img src="img\diseño_1.jpg" width="350" alt="diseño_1">
+</p>
+
+En la segunda imagen se puede ver las ideas que se tienen para la parte del diesño de la pantalla principal ademas de la vista que tendria el jugador
+<p>
+  <img src="img\diseño_2.jpg" width="350" alt="diseño_2">
+</p>
