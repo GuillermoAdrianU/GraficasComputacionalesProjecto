@@ -83,16 +83,27 @@ Los amarillos son igual de resistentes que los azules, pero sueltan alguno de lo
 ### Pelota
 La pelota es el objeto principal del juego y este puede moverse en todos los ejes y revisando las librerías las que se parece ser mas simple de usar y nos ayudara con el tema de las colisiones de la pelota es la de cannon https://github.com/pmndrs/cannon-es
 <p>
-  <img src="img\pelota.png " width="350" alt="jugador">
+  <img src="img\ball.png " width="350" alt="jugador">
 </p>
 
 ### Power-Ups
 Actualmente se piensa que habrá tres tipos de power-ups, cuando se destruye un ladrillo de color amarillo aparece uno de los power ups en el ladrillo destruido y este empieza a descender en el cubo y el jugador debe de agarrarlo para que tome en cuenta el power-up
-Obtener vida extra
+
+### Obtener vida extra
 Al agarra el bloque el jugador obtiene una vida extra
+<p>
+  <img src="img\vidaExtra.png " width="350" alt="power-up1">
+</p>
 
-Agrandar la barra
+### Agrandar la barra
 Al agarra el bloque la barra del jugador se agranda
+<p>
+  <img src="img\Mario Mushroom.jpg " width="350" alt="power-up2">
+</p>
 
-Agrandar la pelota
-Al agarra el bloque la pelota se agranda
+### Division de la pelota
+Al agarra el power up salen clones de la pelota que ayudan a golpear más ladrillos
+<p>
+  <img src="img\division.png " width="350" alt="power-up3">
+</p>
+
