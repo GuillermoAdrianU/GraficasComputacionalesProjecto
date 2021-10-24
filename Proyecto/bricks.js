@@ -1,5 +1,5 @@
 //Librerias que se van a importar
-import * as THREE from './libs/three.js/r131/three.module.js'
+import * as THREE from './libs/three.js/r131/three.module.js';
 import { OrbitControls } from './libs/three.js/r131/controls/OrbitControls.js';
 import { OBJLoader } from './libs/three.js/r131/loaders/OBJLoader.js';
 import { MTLLoader } from './libs/three.js/r131/loaders/MTLLoader.js';
@@ -25,16 +25,19 @@ grupopowerUps= null,
 grupoLadrillos = null,
 //Objetos 
 jugador = null,
-pelota = null,
 powerUpsList = []
 //Variables
 let Gx = null;
 let Gy = null;
 let Gz = null;
+let Ex = null;
+let Ey = null;
+let Ez = null;
 //Objetos con modelo
-let objMtlModelUrlPower1 = {obj:'', mtl: ''};
-let objMtlModelUrlPower2 = {obj:'', mtl: ''};
-let objMtlModelUrlPower3 = {obj:'', mtl: ''};
+let pelota = {obj:'modelos/Foot-Ball-obj/Ball.obj', mtl: 'modelos/Foot-Ball-obj/Ball.mtl'}
+let objMtlModelUrlPower1 = {obj:'modelos/crecer/Mario Mushroom.obj', mtl:'modelos/crecer/Mario_Mushroom.mtl'};
+let objMtlModelUrlPower2 = {obj:'modelos/medpack2/Sci-fi Med_kit.obj', mtl: 'modelos/medpack2/Sci-fi Med_kit.mtl'};
+let objMtlModelUrlPower3 = {obj:'modelos/multiball/zero point.obj', mtl: 'modelos/multiball/zero_point.mtl'};
 //Mapa
 let mapUrl = 'img/blanco.jpg';
 //Tiempo
@@ -97,9 +100,10 @@ function update()
 
 }
 
-//Funcion para cargar los powerUps
-async function loadObjMtl(objModelUrl, objectList, Gx, Gy,Gz,grupo)
+//Funcion para cargar los objetos mtl
+async function loadObjMtl(objModelUrl, objectList, Gx, Gy,Gz,grupo, Ex, Ey, Ez)
 {
+    console.log("CargaMtl: ",objModelUrl)
     console.log("Entra a carga objetos")
     try
     {
@@ -115,8 +119,9 @@ async function loadObjMtl(objModelUrl, objectList, Gx, Gy,Gz,grupo)
                 child.receiveShadow = true;
             }
         });
+        console.log("ObjMtl: ", object)
         object.position.set(Gx,Gy,Gz);
-        object.scale.set(.01, .01, .01);
+        object.scale.set(Ex, Ey, Ez);
         objectList.push(object);
         grupo.add(object);
     }
@@ -146,23 +151,6 @@ async function createRectangle(x,y,z,url){
     })
 }
 
-async function createSphere(x,y,z,url){
-    return new Promise(async (resolve) => {
-        // Textura de la esfera
-        const textureUrl = url;
-        const texture = new THREE.TextureLoader().load(textureUrl);
-        const material = new THREE.MeshPhongMaterial({ map: texture });
-        
-        // Geometria de la esfera
-        let geometry = new THREE.SphereGeometry (x,y,z);
-
-        // Creamos el objeto con la geometria y el material
-        let sphere = new THREE.Mesh(geometry, material);
-
-        resolve(sphere)
-    })
-}
-
 async function createPlayer(x,y,z,url,grupo){
     try{
         const player = await createRectangle(x,y,z,url,grupo);
@@ -183,19 +171,6 @@ async function createBricks(Gx,Gy,Gz,x,y,z,url,grupo){
         grupo.add(brick);
 
         brick.position.set(Gx,Gy,Gz);
-
-    } catch(err) {
-        return onError(err)
-    }
-}
-
-async function createBall(x,y,z,url,grupo){
-    try{
-        const ball = await createSphere(x,y,z,url,grupo);
-
-        grupo.add(ball);
-
-        grupo.position.set(0,25,0);
 
     } catch(err) {
         return onError(err)
@@ -297,7 +272,7 @@ function createScene(canvas)
     //Crea los objetos del juego
     jugador = createPlayer(5,1,5, "img/ladrillo_morado.jpg", grupoJugador);
 
-    pelota = createBall(2,2,2, "img/blanco.jpg", grupoPelotas);
+    pelota = loadObjMtl(pelota, powerUpsList, 0, 25, 0, grupoPelotas,0.01,0.01,0.01);
 
     //Crear los 125 ladrillos para romper
     let Gx = -10, 
@@ -312,7 +287,6 @@ function createScene(canvas)
             Gx = -10
             for(let k = 0; k < 5 ; k ++){
                 var numero = getRandomInt(0,2)
-                console.log("Color: ",numero)
                 createBricks(Gx,Gy,Gz,5,3,5,"img/ladrillo_"+colors[numero]+".jpg",grupoLadrillos);
                 Gx += 5;
             }
@@ -320,9 +294,12 @@ function createScene(canvas)
     }
 
     //Dibujar muestra powerUps
-    loadObjMtl(objMtlModelUrlPower1, powerUpsList, 0, 10, 0, grupopowerUps)
-    loadObjMtl(objMtlModelUrlPower2, powerUpsList, 5, 10, 0, grupopowerUps)
-    loadObjMtl(objMtlModelUrlPower3, powerUpsList, 10, 10, 0, grupopowerUps)
+    let hongo = loadObjMtl(objMtlModelUrlPower1, powerUpsList, 0, 25, 0, grupopowerUps,0.3,0.3,0.3)
+    console.log("Power1: ", hongo)
+    let medical = loadObjMtl(objMtlModelUrlPower2, powerUpsList, 10, 25, 0, grupopowerUps,1,1,1)
+    console.log("Power: ", medical)
+    let esferas = loadObjMtl(objMtlModelUrlPower3, powerUpsList, 0, 25, 10, grupopowerUps,0.002,0.002,0.002)
+    console.log("Power3: ", esferas)
 
     //Crear la textura del fondo
     const map = new THREE.TextureLoader().load(mapUrl);
