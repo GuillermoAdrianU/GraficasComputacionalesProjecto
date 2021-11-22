@@ -3,7 +3,7 @@ import * as THREE from './libs/three.js/r131/three.module.js';
 import { OrbitControls } from './libs/three.js/r131/controls/OrbitControls.js';
 import { OBJLoader } from './libs/three.js/r131/loaders/OBJLoader.js';
 import { MTLLoader } from './libs/three.js/r131/loaders/MTLLoader.js';
-
+import * as CANNON from '../node_modules/cannon-es/dist/cannon-es.js';
 
 
 //Objetos a renderizar
@@ -66,7 +66,6 @@ function main() {
     const canvas = document.getElementById('webglcanvas');
 
     createScene(canvas);
-    initCannon()
     update();
 
     // Update the camera controller
@@ -74,37 +73,6 @@ function main() {
 
     
 };
-
-function updatePhysics() {
-
-    // Step the physics world
-    world.step(timeStep);
-
-    // Copy coordinates from Cannon.js to Three.js
-    mesh.position.copy(body.position);
-    mesh.quaternion.copy(body.quaternion);
-
-}
-
-
-function initCannon() {
-
-    world = new CANNON.World();
-    world.gravity.set(0,0,0);
-    world.broadphase = new CANNON.NaiveBroadphase();
-    world.solver.iterations = 10;
-
-    shape = new CANNON.Box(new CANNON.Vec3(1,1,1));
-    mass = 1;
-    body = new CANNON.Body({
-      mass: 1
-    });
-    body.addShape(shape);
-    body.angularVelocity.set(0,10,0);
-    body.angularDamping = 0.5;
-    world.addBody(body);
-
-}
 
 
 //Funcion que captura algún error a la hora de cargar los objetos
@@ -271,7 +239,6 @@ async function movePlayer(player,camera) {
 }
 
 async function powerUp1(jugador){
-
     //Duplica el tamaño del jugador
     jugador.x = jugador.x * 2
     jugador.z = jugador.z * 2
@@ -305,7 +272,6 @@ async function powerUp3(grupo){
     // Remover las pelotas del grupo
     grupo.remove(pelota2)
     grupo.remove(pelota3)
-
 }
 
 async function eliminarVida(vidas){
@@ -313,19 +279,12 @@ async function eliminarVida(vidas){
     return vidas
 }
 
-async function colisiones() {
+async function destruirBricks(grupo){
 
-    for (var vertexIndex = 0; vertexIndex < MovingCube.geometry.length; vertexIndex++)
-	{		
-		var localVertex = MovingCube.geometry.vertices[vertexIndex].clone();
-		var globalVertex = localVertex.applyMatrix4( MovingCube.matrix );
-		var directionVector = globalVertex.sub( MovingCube.position );
-		
-		var ray = new THREE.Raycaster( originPoint, directionVector.clone().normalize() );
-		var collisionResults = ray.intersectObjects( collidableMeshList );
-		if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ) 
-			appendText(" Hit ");
-	}	
+}
+
+async function colisiones() {
+    
 }
 
 //Funcion para crear la Scena
