@@ -4,6 +4,8 @@ import { OrbitControls } from './libs/three.js/r131/controls/OrbitControls.js';
 import { OBJLoader } from './libs/three.js/r131/loaders/OBJLoader.js';
 import { MTLLoader } from './libs/three.js/r131/loaders/MTLLoader.js';
 
+
+
 //Objetos a renderizar
 let renderer = null,
     //Escenario
@@ -45,6 +47,17 @@ let duration = 20000;
 let currentTime = Date.now();
 
 
+let keyboard = new THREEx.KeyboardState();
+var clock = new THREE.Clock();
+
+
+let player;
+let collidableMeshList = [];
+let MovingCube;
+let arrowList = [];
+let directionList = [];
+
+var world, mass, body, shape, timeStep=1/60, mesh, geometry1, material1;
 
 //Empieza el codigo
 
@@ -53,12 +66,46 @@ function main() {
     const canvas = document.getElementById('webglcanvas');
 
     createScene(canvas);
-
+    initCannon()
     update();
 
     // Update the camera controller
     orbitControls.update();
+
+    
 };
+
+function updatePhysics() {
+
+    // Step the physics world
+    world.step(timeStep);
+
+    // Copy coordinates from Cannon.js to Three.js
+    mesh.position.copy(body.position);
+    mesh.quaternion.copy(body.quaternion);
+
+}
+
+
+function initCannon() {
+
+    world = new CANNON.World();
+    world.gravity.set(0,0,0);
+    world.broadphase = new CANNON.NaiveBroadphase();
+    world.solver.iterations = 10;
+
+    shape = new CANNON.Box(new CANNON.Vec3(1,1,1));
+    mass = 1;
+    body = new CANNON.Body({
+      mass: 1
+    });
+    body.addShape(shape);
+    body.angularVelocity.set(0,10,0);
+    body.angularDamping = 0.5;
+    world.addBody(body);
+
+}
+
 
 //Funcion que captura algún error a la hora de cargar los objetos
 function onError(err) {
@@ -92,7 +139,9 @@ function update() {
     renderer.render(scene, camera);
 
     movePlayer(grupoJugador)
+    //colisiones()
 
+    updatePhysics()
     // Spin the cube for next frame
     animate();
 
@@ -167,6 +216,8 @@ async function createBricks(Gx, Gy, Gz, x, y, z, url, grupo) {
 
         brick.position.set(Gx, Gy, Gz);
 
+        collidableMeshList.push(brick)
+
     } catch (err) {
         return onError(err)
     }
@@ -185,58 +236,34 @@ async function moveBall() {
 
 //Funcion que mueve al jugador
 async function movePlayer(player) {
-    let speedX = 0.0001
-    let speedZ = 0.0001
 
-    document.addEventListener("keydown", onDocumentKeyDown, false);
-    function onDocumentKeyDown(event) {
-        var keyCode = event.which;
-        // DOWN ARROW
-        if (keyCode == 40) {
-            player.position.z += speedZ;
-        } 
-        // UP ARROW
-        else if (keyCode == 38) {
-            player.position.z -= speedZ;
-        } 
-        // LEFT ARROW
-        else if (keyCode == 37) {
-            player.position.x -= speedX;
-        } 
-        // RIGHT ARROW
-        else if (keyCode == 39) {
-            player.position.x += speedX;
-        } 
-        // S
-        else if (keyCode == 83) {
-            player.position.x += speedX;
-            player.position.z -= speedZ;
-        } 
-        // A
-        else if (keyCode == 65) {
-            player.position.x -= speedX;
-            player.position.z += speedZ;
-        } 
-        // W
-        else if (keyCode == 87) {
-            player.position.x -= speedZ;
-            player.position.z -= speedX;
-        } 
-        // S
-          else if (keyCode == 68) {
-            player.position.x += speedZ;
-            player.position.z += speedX;
-        } 
-        // SPACE
-        else if (keyCode == 32) {
-            player.position.set(0, 20, 0);
-        }
-    };
+    let delta = clock.getDelta(); // seconds.
+    let moveDistance = 20 * delta; // 200 pixels per second
+
+    if (keyboard.pressed("left"))
+        player.position.x -= moveDistance
+    if (keyboard.pressed("right"))
+        player.position.x += moveDistance;
+    if (keyboard.pressed("up"))
+        player.position.z -= moveDistance;
+    if (keyboard.pressed("down"))
+        player.position.z += moveDistance;
 
 }
 
 async function colisiones() {
 
+    for (var vertexIndex = 0; vertexIndex < MovingCube.geometry.length; vertexIndex++)
+	{		
+		var localVertex = MovingCube.geometry.vertices[vertexIndex].clone();
+		var globalVertex = localVertex.applyMatrix4( MovingCube.matrix );
+		var directionVector = globalVertex.sub( MovingCube.position );
+		
+		var ray = new THREE.Raycaster( originPoint, directionVector.clone().normalize() );
+		var collisionResults = ray.intersectObjects( collidableMeshList );
+		if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ) 
+			appendText(" Hit ");
+	}	
 }
 
 //Funcion para crear la Scena
@@ -282,6 +309,7 @@ function createScene(canvas) {
     ambientLight = new THREE.AmbientLight(0x444444, 0.8);
     scene.add(ambientLight);
 
+
     //Crear los grupos
 
     // Create a group to hold the objects
@@ -310,9 +338,10 @@ function createScene(canvas) {
     grupoJuego.add(grupopowerUps)
 
 
+
     //Crea los objetos del juego
     jugador = createPlayer(5, 1, 5, "img/ladrillo_morado.jpg", grupoJugador);
-    
+
     pelota = loadObjMtl(pelota, powerUpsList, 0, 25, 0, grupoPelotas, 0.01, 0.01, 0.01);
 
     //Crear los 125 ladrillos para romper
@@ -349,7 +378,7 @@ function createScene(canvas) {
 
     //Put in a ground plane to show off the lighting
     let geometry = new THREE.PlaneGeometry(200, 200, 50, 50);
-    let mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({ map: map, side: THREE.DoubleSide }));
+    mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({ map: map, side: THREE.DoubleSide }));
 
     //Create the cylinder 
     geometry = new THREE.CylinderGeometry(1, 2, 2, 50, 10);
