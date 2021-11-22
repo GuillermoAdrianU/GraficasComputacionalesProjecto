@@ -10,7 +10,7 @@ let renderer = null,
     group = null,
     scene = null,
     camera = null,
-    map = null,
+    mapa = null,
     //Controles
     orbitControls = null,
     //Luces
@@ -27,6 +27,8 @@ let renderer = null,
     jugador = null,
     powerUpsList = []
 //Variables
+//Vidas del jugador
+let vidas = 3;
 let Gx = null;
 let Gy = null;
 let Gz = null;
@@ -91,11 +93,19 @@ function update() {
     // Render the scene
     renderer.render(scene, camera);
 
-    movePlayer(grupoJugador)
+    movePlayer(grupoJugador);
+    moveCamera(camera);
 
     // Spin the cube for next frame
     animate();
 
+}
+
+//Funcion para esperar
+function delay(n){
+    return new Promise(function(resolve){
+        setTimeout(resolve,n*1000);
+    });
 }
 
 //Funcion para cargar los objetos mtl
@@ -146,13 +156,29 @@ async function createRectangle(x, y, z, url) {
     })
 }
 
+//Funcion para crear el rectangulo
+async function createRectangleMap(x, y, z) {
+    return new Promise(async (resolve) => {
+
+        //Geometria del ladrillo
+        let geometry = new THREE.BoxGeometry(x, y, z);
+
+        //Se crea el objeto 
+        let map = new THREE.Mesh(geometry);
+
+        //Regresamos el ladrillo
+        resolve(map)
+
+    })
+}
+
 async function createPlayer(x, y, z, url, grupo) {
     try {
         const player = await createRectangle(x, y, z, url, grupo);
 
         grupo.add(player);
 
-        grupo.position.set(0, 20, 0);
+        grupo.position.set(0, -1, 0);
 
     } catch (err) {
         return onError(err)
@@ -170,6 +196,19 @@ async function createBricks(Gx, Gy, Gz, x, y, z, url, grupo) {
     } catch (err) {
         return onError(err)
     }
+}
+
+async function createMap(Gx, Gy, Gz, x, y, z, grupo) {
+    try {
+        const map = await createRectangleMap(x, y, z, grupo);
+
+        grupo.add(map);
+
+        map.position.set(Gx, Gy, Gz);
+
+    } catch (err) {
+        return onError(err)
+    }    
 }
 
 function getRandomInt(min, max) {
@@ -235,6 +274,100 @@ async function movePlayer(player) {
 
 }
 
+//Funcion que mueve al jugador
+async function moveCamera(camera) {
+    let speedX = 0.0001
+    let speedZ = 0.0001
+
+    document.addEventListener("keydown", onDocumentKeyDown, false);
+    function onDocumentKeyDown(event) {
+        var keyCode = event.which;
+        // DOWN ARROW
+        if (keyCode == 40) {
+            camera.position.z += speedZ;
+        } 
+        // UP ARROW
+        else if (keyCode == 38) {
+            camera.position.z -= speedZ;
+        } 
+        // LEFT ARROW
+        else if (keyCode == 37) {
+            camera.position.x -= speedX;
+        } 
+        // RIGHT ARROW
+        else if (keyCode == 39) {
+            camera.position.x += speedX;
+        } 
+        // S
+        else if (keyCode == 83) {
+            camera.position.x += speedX;
+            camera.position.z -= speedZ;
+        } 
+        // A
+        else if (keyCode == 65) {
+            camera.position.x -= speedX;
+            camera.position.z += speedZ;
+        } 
+        // W
+        else if (keyCode == 87) {
+            camera.position.x -= speedZ;
+            camera.position.z -= speedX;
+        } 
+        // S
+          else if (keyCode == 68) {
+            camera.position.x += speedZ;
+            camera.position.z += speedX;
+        } 
+        // SPACE
+        else if (keyCode == 32) {
+            camera.position.set(0, 20, 0);
+        }
+    };
+}
+
+async function powerUp1(jugador){
+
+    //Duplica el tamaño del jugador
+    jugador.x = jugador.x * 2
+    jugador.z = jugador.z * 2
+
+    //Esperar 10 segundos
+    await delay(10)
+
+    //Regresa al tamaño original
+    jugador.x = jugador.x / 2
+    jugador.z = jugador.z / 2
+
+}
+
+async function powerUp2(vidas){
+    vidas += 1   
+    return vidas
+}
+
+async function powerUp3(grupo){
+    // Crea las nuevas pelotas
+    let pelota2 = loadObjMtl(pelota, powerUpsList, 0, 25, 0, grupoPelotas, 0.01, 0.01, 0.01);
+    let pelota3 = loadObjMtl(pelota, powerUpsList, 0, 25, 0, grupoPelotas, 0.01, 0.01, 0.01);
+
+    // Agregar las pelotas al grupo
+    grupo.add(pelota2)
+    grupo.add(pelota3)
+
+    //Espera 10 segundos
+    await delay(10)
+
+    // Remover las pelotas del grupo
+    grupo.remove(pelota2)
+    grupo.remove(pelota3)
+
+}
+
+async function eliminarVida(vidas){
+    vidas -= 1
+    return vidas
+}
+
 async function colisiones() {
 
 }
@@ -254,7 +387,7 @@ function createScene(canvas) {
     renderer.shadowMap.type = THREE.BasicShadowMap;
 
     // Crea el fondo de estrellas
-    let background_image = new THREE.TextureLoader().load("img/fondo_estrellas.jpg")
+    let background_image = new THREE.TextureLoader().load("img/fondo_estrellas.jpg");
 
 
     background_image.minFilter = THREE.LinearFilter;
@@ -266,14 +399,14 @@ function createScene(canvas) {
 
     // Add  a camera so we can view the scene
     camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 1, 4000);
-    camera.position.set(0, 40, 0);
+    camera.position.set(0, -1, 0);
 
     // Add a directional light to show off the objects
     const light = new THREE.DirectionalLight(0xffffff, 1.0);
 
     // Position the light out from the scene, pointing at the origin
     light.position.set(-.5, .2, 1);
-    light.target.position.set(0, -2, 0);
+    light.target.position.set(0, -10, 0);
     scene.add(light);
 
     orbitControls = new OrbitControls(camera, renderer.domElement);
@@ -292,7 +425,7 @@ function createScene(canvas) {
     grupoJuego = new THREE.Object3D;
     group.add(grupoJuego)
 
-    //Grupo del juegador
+    //Grupo del jugador
     grupoJugador = new THREE.Object3D;
     grupoJuego.add(grupoJugador)
 
@@ -311,6 +444,8 @@ function createScene(canvas) {
 
 
     //Crea los objetos del juego
+    mapa = createMap(50, 50, 50, grupoJuego);
+
     jugador = createPlayer(5, 1, 5, "img/ladrillo_morado.jpg", grupoJugador);
     
     pelota = loadObjMtl(pelota, powerUpsList, 0, 25, 0, grupoPelotas, 0.01, 0.01, 0.01);
@@ -335,12 +470,12 @@ function createScene(canvas) {
     }
 
     //Dibujar muestra powerUps
-    let hongo = loadObjMtl(objMtlModelUrlPower1, powerUpsList, 0, 25, 0, grupopowerUps, 0.3, 0.3, 0.3)
-    console.log("Power1: ", hongo)
-    let medical = loadObjMtl(objMtlModelUrlPower2, powerUpsList, 10, 25, 0, grupopowerUps, 1, 1, 1)
-    console.log("Power: ", medical)
-    let esferas = loadObjMtl(objMtlModelUrlPower3, powerUpsList, 0, 25, 10, grupopowerUps, 0.002, 0.002, 0.002)
-    console.log("Power3: ", esferas)
+    // let hongo = loadObjMtl(objMtlModelUrlPower1, powerUpsList, 0, 25, 0, grupopowerUps, 0.3, 0.3, 0.3)
+    // console.log("Power1: ", hongo)
+    // let medical = loadObjMtl(objMtlModelUrlPower2, powerUpsList, 10, 25, 0, grupopowerUps, 1, 1, 1)
+    // console.log("Power: ", medical)
+    // let esferas = loadObjMtl(objMtlModelUrlPower3, powerUpsList, 0, 25, 10, grupopowerUps, 0.002, 0.002, 0.002)
+    // console.log("Power3: ", esferas)
 
     //Crear la textura del fondo
     const map = new THREE.TextureLoader().load(mapUrl);
