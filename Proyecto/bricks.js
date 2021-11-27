@@ -47,18 +47,25 @@ let mapUrl = 'img/blanco.jpg';
 let duration = 20000;
 let currentTime = Date.now();
 // cannon.js variables
-let world = new CANNON.World()
-let velocity
-const timeStep = 1 / 60
-let lastCallTime = performance.now()
+let world = new CANNON.World();
+const timeStep = 1 / 60;
+let lastCallTime = performance.now();
 let lastTime;
 let sphereShape
 let sphereBody
 let physicsMaterial
-const balls = []
-const ballMeshes = []
-const boxes = []
-const boxMeshes = []
+const balls = [];
+const ballMeshes = [];
+const boxes = [];
+const boxMeshes = [];
+
+//colisiones
+let flagBrick = false;
+let flagPlayer = true;
+let flagWall = false;
+let vely = 0;
+let velx = 0;
+let velz = 0;
 
 
 
@@ -95,10 +102,39 @@ function initPthysicsWorld () {
 }
 
 
+function randomVel(){
+    if(velz >= 0 || velz <= 0){
+        if(velz == 0){
+            velz = getRandomInt(0,3);
+        }
+        else {
+            if(velz > 0){
+                velz = -1 * getRandomInt(0,3);
+            }
+            else{
+                velz = getRandomInt(0,3);
+            }
+        }
+    }
+    if(velx >= 0 || velx <= 0){
+        if(velx == 0){
+            velx = getRandomInt(0,3);
+        }
+        else {
+            if(velx > 0){
+                velx = -1 * getRandomInt(0,3);
+            }
+            else{
+                velx = getRandomInt(0,3);
+            }
+        }
+    }
+}
+
+
 //Crea la pelota
 function crearPelota(mesh){
     let material = new THREE.MeshLambertMaterial({ color: 0xdddddd });
-    const shootVelocity = 2;
     const ballShape = new CANNON.Sphere(0.2);
     const ballGeometry = new THREE.SphereBufferGeometry(ballShape.radius, 32, 32);
     const ballBody = new CANNON.Body({ mass: 1 });
@@ -117,10 +153,26 @@ function crearPelota(mesh){
     ballBody.addEventListener('collide', function (e) {
         console.log(e);
         console.log('Collision!');
+        if(flagBrick){
+            vely = -1 * getRandomInt(0,3);
+            if(vely == 0){
+                vely = -1;
+            }
+            flagBrick = false
+        }
+        if(flagPlayer){
+            vely = getRandomInt(0,3);
+            if(vely == 0){
+                vely = 1;
+            }
+            flagPlayer = false
+        }
+        randomVel();
+        console.log(velx + "    " + vely + "    " + velz)
         ballBody.velocity.set(
-            0 * 2,
-            2 * 2,
-            0 * 2
+            velx,
+            vely,
+            velz
         );
     });
     world.addBody(ballBody);
@@ -259,6 +311,7 @@ async function createPlayer(x, y, z, url, grupo) {
         body.position.copy(player.position);
         body.updateAABB();
         body.player = player;
+        console.log(body)
         world.addBody(body);
 
 
@@ -613,6 +666,7 @@ function createScene(canvas) {
     group.add(mesh);
 
     console.log(world)
+    console.log(ballMeshes)
 
 }
 
