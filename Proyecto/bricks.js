@@ -3,6 +3,7 @@ import * as THREE from './libs/three.js/r131/three.module.js';
 import { OrbitControls } from './libs/three.js/r131/controls/OrbitControls.js';
 import { OBJLoader } from './libs/three.js/r131/loaders/OBJLoader.js';
 import { MTLLoader } from './libs/three.js/r131/loaders/MTLLoader.js';
+import * as CANNON from './node_modules/cannon-es/dist/cannon-es.js'
 
 //Objetos a renderizar
 let renderer = null,
@@ -45,6 +46,19 @@ let mapUrl = 'img/blanco.jpg';
 //Tiempo
 let duration = 20000;
 let currentTime = Date.now();
+// cannon.js variables
+let world = new CANNON.World()
+let velocity
+const timeStep = 1 / 60
+let lastCallTime = performance.now()
+let lastTime;
+let sphereShape
+let sphereBody
+let physicsMaterial
+const balls = []
+const ballMeshes = []
+const boxes = []
+const boxMeshes = []
 
 
 
@@ -75,6 +89,46 @@ function onProgress(xhr) {
     }
 }
 
+function initPthysicsWorld () {
+    
+    
+}
+
+
+//Crea la pelota
+function crearPelota(mesh){
+    let material = new THREE.MeshLambertMaterial({ color: 0xdddddd });
+    const shootVelocity = 2;
+    const ballShape = new CANNON.Sphere(0.2);
+    const ballGeometry = new THREE.SphereBufferGeometry(ballShape.radius, 32, 32);
+    const ballBody = new CANNON.Body({ mass: 1 });
+    ballBody.addShape(ballShape);
+    const ballMesh = new THREE.Mesh(ballGeometry, material);
+    balls.push(ballBody);
+    ballMeshes.push(ballMesh);
+    ballBody.velocity.set(
+        0 * 2,
+        -2 * 2,
+        0 * 2
+    );
+    ballBody.position.set(0, 5, 0);
+    ballMesh.position.copy(ballBody.position);
+    ballBody.collisionResponse = 0;
+    ballBody.addEventListener('collide', function (e) {
+        console.log(e);
+        console.log('Collision!');
+        ballBody.velocity.set(
+            0 * 2,
+            2 * 2,
+            0 * 2
+        );
+    });
+    world.addBody(ballBody);
+    scene.add(ballMesh);
+    console.log(ballBody);
+
+}
+
 
 //Crea la rotacion de los objetos mientras caen
 function animate() {
@@ -83,18 +137,27 @@ function animate() {
     currentTime = now;
     let fract = deltat / duration;
     let angle = Math.PI * 1 * fract;
+    // Update ball positions
 }
+
 
 function update() {
     requestAnimationFrame(function () { update(); });
 
-    var time = Date.now();
-
+    const time = performance.now() / 1000
+    const dt = time - lastCallTime
+    lastCallTime = time
     // Render the scene
     renderer.render(scene, camera);
 
     movePlayer(grupoJugador);
     moveCamera(camera);
+    world.step(timeStep, dt)
+    for (let i = 0; i < balls.length; i++) {
+        ballMeshes[i].position.copy(balls[i].position)
+        ballMeshes[i].quaternion.copy(balls[i].quaternion)
+    }
+    
 
     // Spin the cube for next frame
     animate();
@@ -163,8 +226,11 @@ async function createRectangleMap(x, y, z) {
         //Geometria del ladrillo
         let geometry = new THREE.BoxGeometry(x, y, z);
 
+        //Se crea el material
+        var material = new THREE.MeshLambertMaterial({color: 0x0000ff, transparent: true, opacity: 0.5});
+
         //Se crea el objeto 
-        let map = new THREE.Mesh(geometry);
+        let map = new THREE.Mesh(geometry, material);
 
         //Regresamos el ladrillo
         resolve(map)
@@ -179,6 +245,22 @@ async function createPlayer(x, y, z, url, grupo) {
         grupo.add(player);
 
         grupo.position.set(0, -1, 0);
+        //Se pone el Cannon al objeto
+        let shape = null;
+        player.geometry.computeBoundingBox();
+        let box = player.geometry.boundingBox;
+        shape = new CANNON.Box(new CANNON.Vec3(
+            (box.max.x - box.min.x) / 2,
+            (box.max.y - box.min.y) / 2,
+            (box.max.z - box.min.z) / 2
+        ));
+        let body = new CANNON.Body({mass:1});
+        body.addShape(shape);
+        body.position.copy(player.position);
+        body.updateAABB();
+        body.player = player;
+        world.addBody(body);
+
 
     } catch (err) {
         return onError(err)
@@ -193,6 +275,27 @@ async function createBricks(Gx, Gy, Gz, x, y, z, url, grupo) {
 
         brick.position.set(Gx, Gy, Gz);
 
+        //Se pone el Cannon al objeto
+        let shape = null;
+        brick.geometry.computeBoundingBox();
+        let box = brick.geometry.boundingBox;
+        shape = new CANNON.Box(new CANNON.Vec3(
+            (box.max.x - box.min.x) / 2,
+            (box.max.y - box.min.y) / 2,
+            (box.max.z - box.min.z) / 2
+        ));
+        let body = new CANNON.Body({mass:1});
+        const posx = brick.position.x
+        const posy = brick.position.y + 48
+        const posz = brick.position.z
+        body.addShape(shape);
+        body.position.set(posx, posy, posz)
+        body.updateAABB();
+        body.brick = brick;
+        boxMeshes.push(body)
+        boxes.push(body)
+        world.addBody(body);
+
     } catch (err) {
         return onError(err)
     }
@@ -201,10 +304,25 @@ async function createBricks(Gx, Gy, Gz, x, y, z, url, grupo) {
 async function createMap(Gx, Gy, Gz, x, y, z, grupo) {
     try {
         const map = await createRectangleMap(x, y, z, grupo);
-
+        console.log(map)
         grupo.add(map);
 
         map.position.set(Gx, Gy, Gz);
+        //Se pone el Cannon al objeto
+        let shape = null;
+        map.geometry.computeBoundingBox();
+        let box = map.geometry.boundingBox;
+        shape = new CANNON.Box(new CANNON.Vec3(
+            (box.max.x - box.min.x) / 2,
+            (box.max.y - box.min.y) / 2,
+            (box.max.z - box.min.z) / 2
+        ));
+        let body = new CANNON.Body({mass:1});
+        body.addShape(shape);
+        body.position.copy(map.position);
+        body.updateAABB();
+        body.map = map;
+        world.addBody(body);
 
     } catch (err) {
         return onError(err)
@@ -449,7 +567,7 @@ function createScene(canvas) {
     jugador = createPlayer(5, 1, 5, "img/ladrillo_morado.jpg", grupoJugador);
     
     pelota = loadObjMtl(pelota, powerUpsList, 0, 25, 0, grupoPelotas, 0.01, 0.01, 0.01);
-
+    crearPelota(pelota)
     //Crear los 125 ladrillos para romper
     let Gx = -10,
         Gy = 10,
@@ -493,6 +611,8 @@ function createScene(canvas) {
     mesh.castShadow = false;
     mesh.receiveShadow = true;
     group.add(mesh);
+
+    console.log(world)
 
 }
 
