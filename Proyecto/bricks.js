@@ -69,7 +69,8 @@ let flagPlayer = true;
 let flagWall = false;
 let vely = 0;
 let velx = 0;
-let velz = 0;
+let velz = -5;
+let bodyErase = null;
 
 
 
@@ -148,28 +149,44 @@ function crearPelota(mesh){
     ballMeshes.push(ballMesh);
     ballBody.velocity.set(
         0 * 2,
-        -2 * 2,
-        0 * 2
+        0 * 2,
+        -5 * 2
     );
-    ballBody.position.set(0, 5, 0);
+    ballBody.position.set(0, 15, 0);
     ballMesh.position.copy(ballBody.position);
     ballBody.collisionResponse = 0;
     ballBody.addEventListener('collide', function (e) {
+        ballBody.velocity.set(
+            0,
+            0,
+            0
+        );
         if(e.contact.bj.brick){
             flagBrick = true;
-            console.log("funciona")
+            console.log("ladrillo")
             console.log(e.contact.bj.id)
-            let bodyErase = e.contact.bj
+            bodyErase = e.contact.bj
             console.log(bodyErase)
             bodyErase.brick.visible = false;
-            bodyErase.position.x = 1000
+            // bodyErase.collisionResponse = false;
+            // bodyErase.shapes[0].collisionResponse = false
+            // bodyErase.mass = 0
+            // bodyErase.sleep()
+            // bodyErase.wakeUpAfterNarrowphase = true
+            world.removeBody(bodyErase)
+            // bodyErase.position.x = 1000
         }
         if(e.contact.bj.player){
             flagPlayer = true;
-            console.log("funciona")
+            console.log("jugador")
         }
 
-        console.log(e.contact.bj);
+        if(e.contact.bj.wall){
+            flagWall = true
+            console.log("mapa")
+        }
+
+        console.log(e.contact);
         console.log('Collision!');
         if(flagBrick){
             console.log("aqui entras?")
@@ -177,7 +194,7 @@ function crearPelota(mesh){
             if(vely == 0){
                 vely = -1;
             }
-            vely = -5
+            vely = -5 // pruebas -> eliminar
             flagBrick = false
 
         }
@@ -186,20 +203,24 @@ function crearPelota(mesh){
             if(vely == 0){
                 vely = 1;
             }
-            vely = 5
+            vely = 5 // pruebas -> eliminar
             flagPlayer = false
+        }
+
+        if(flagWall) {
+            velz = -1 * velz; // pruebas -> eliminar
+            flagWall = false;
         }
         // randomVel();
         console.log(velx + "    " + vely + "    " + velz)
         ballBody.velocity.set(
             0 * 2,
-            vely * 2,
+            0 * 2,
             0 * 2
         );
     });
     world.addBody(ballBody);
     scene.add(ballMesh);
-    console.log(ballBody);
 
 }
 
@@ -306,10 +327,10 @@ async function createRectangleMap(x, y, z, url) {
         let geometry = new THREE.BoxGeometry(x, y, z);
 
         //Se crea el objeto 
-        let map = new THREE.Mesh(geometry, material);
+        let wall = new THREE.Mesh(geometry, material);
 
         //Regresamos el ladrillo
-        resolve(map)
+        resolve(wall)
 
     })
 }
@@ -335,7 +356,6 @@ async function createPlayer(x, y, z, url, grupo) {
         body.position.copy(player.position);
         body.updateAABB();
         body.player = player;
-        console.log(body)
         world.addBody(body);
 
 
@@ -380,14 +400,14 @@ async function createBricks(Gx, Gy, Gz, x, y, z, url, grupo) {
 
 async function createMap(Gx, Gy, Gz, x, y, z, url, grupo) {
     try {
-        const map = await createRectangleMap(x, y, z, url);
-        grupo.add(map);
+        const wall = await createRectangleMap(x, y, z, url);
+        grupo.add(wall);
 
-        map.position.set(Gx, Gy, Gz);
+        wall.position.set(Gx, Gy, Gz);
         //Se pone el Cannon al objeto
         let shape = null;
-        map.geometry.computeBoundingBox();
-        let box = map.geometry.boundingBox;
+        wall.geometry.computeBoundingBox();
+        let box = wall.geometry.boundingBox;
         shape = new CANNON.Box(new CANNON.Vec3(
             (box.max.x - box.min.x) / 2,
             (box.max.y - box.min.y) / 2,
@@ -395,10 +415,12 @@ async function createMap(Gx, Gy, Gz, x, y, z, url, grupo) {
         ));
         let body = new CANNON.Body({mass:5});
         body.addShape(shape);
-        body.position.copy(map.position);
+        body.position.copy(wall.position);
         body.updateAABB();
-        body.map = map;
-        console.log(body)
+        body.wall = wall;
+        // body.addEventListener('collide', function(e){
+        //     console.log(e)
+        // })
         world.addBody(body);
 
     } catch (err) {
@@ -639,7 +661,7 @@ function createScene(canvas) {
 
 
     //Crea los objetos del juego
-    mapa = createMap(0, 80, 0, 40, 5, 40, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa = createMap(0, 90, 0, 40, 5, 40, "img/ladrillo_rojo.jpg", grupoJuego);
     mapa2 = createMap(0, 30, 25, 25, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
     mapa3 = createMap(0, 30, -15, 25, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
     mapa4 = createMap(20, 30, 5, 5, 100, 25, "img/ladrillo_rojo.jpg", grupoJuego);
@@ -694,6 +716,7 @@ function createScene(canvas) {
     group.add(mesh);
 
     console.log(world)
+    console.log(grupoLadrillos)
     console.log(ballMeshes)
 
 }
