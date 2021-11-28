@@ -65,11 +65,12 @@ const boxMeshes = [];
 
 //colisiones
 let flagBrick = false;
-let flagPlayer = true;
+let flagPlayer = false;
 let flagWall = false;
+let flagUpperWall = false
 let vely = 0;
 let velx = 0;
-let velz = -5;
+let velz = 0;
 let bodyErase = null;
 
 
@@ -149,8 +150,8 @@ function crearPelota(mesh){
     ballMeshes.push(ballMesh);
     ballBody.velocity.set(
         0 * 2,
-        0 * 2,
-        -5 * 2
+        -2 * 2,
+        0 * 2
     );
     ballBody.position.set(0, 15, 0);
     ballMesh.position.copy(ballBody.position);
@@ -164,9 +165,9 @@ function crearPelota(mesh){
         if(e.contact.bj.brick){
             flagBrick = true;
             console.log("ladrillo")
-            console.log(e.contact.bj.id)
+            // console.log(e.contact.bj.id)
             bodyErase = e.contact.bj
-            console.log(bodyErase)
+            // console.log(bodyErase)
             bodyErase.brick.visible = false;
             // bodyErase.collisionResponse = false;
             // bodyErase.shapes[0].collisionResponse = false
@@ -185,11 +186,15 @@ function crearPelota(mesh){
             flagWall = true
             console.log("mapa")
         }
+        if(e.contact.bj.upperWall){
+            flagUpperWall = true
+            console.log("arriba")
+        }
 
-        console.log(e.contact);
-        console.log('Collision!');
+        // console.log(e.contact);
+        // console.log('Collision!');
         if(flagBrick){
-            console.log("aqui entras?")
+            // console.log("aqui entras?")
             vely = -1 * getRandomInt(0,3);
             if(vely == 0){
                 vely = -1;
@@ -211,11 +216,16 @@ function crearPelota(mesh){
             velz = -1 * velz; // pruebas -> eliminar
             flagWall = false;
         }
+
+        if(flagUpperWall){
+            vely = -5; // pruebas -> eliminar
+            flagUpperWall = false;
+        }
         // randomVel();
         console.log(velx + "    " + vely + "    " + velz)
         ballBody.velocity.set(
             0 * 2,
-            0 * 2,
+            vely * 2,
             0 * 2
         );
     });
@@ -418,6 +428,36 @@ async function createMap(Gx, Gy, Gz, x, y, z, url, grupo) {
         body.position.copy(wall.position);
         body.updateAABB();
         body.wall = wall;
+        // body.addEventListener('collide', function(e){
+        //     console.log(e)
+        // })
+        world.addBody(body);
+
+    } catch (err) {
+        return onError(err)
+    }    
+}
+
+async function createUpperMap(Gx, Gy, Gz, x, y, z, url, grupo) {
+    try {
+        const upperWall = await createRectangleMap(x, y, z, url);
+        grupo.add(upperWall);
+
+        upperWall.position.set(Gx, Gy, Gz);
+        //Se pone el Cannon al objeto
+        let shape = null;
+        upperWall.geometry.computeBoundingBox();
+        let box = upperWall.geometry.boundingBox;
+        shape = new CANNON.Box(new CANNON.Vec3(
+            (box.max.x - box.min.x) / 2,
+            (box.max.y - box.min.y) / 2,
+            (box.max.z - box.min.z) / 2
+        ));
+        let body = new CANNON.Body({mass:5});
+        body.addShape(shape);
+        body.position.copy(upperWall.position);
+        body.updateAABB();
+        body.upperWall = upperWall;
         // body.addEventListener('collide', function(e){
         //     console.log(e)
         // })
@@ -661,7 +701,7 @@ function createScene(canvas) {
 
 
     //Crea los objetos del juego
-    mapa = createMap(0, 90, 0, 40, 5, 40, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa = createUpperMap(0, 90, 0, 40, 5, 40, "img/ladrillo_rojo.jpg", grupoJuego);
     mapa2 = createMap(0, 30, 25, 25, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
     mapa3 = createMap(0, 30, -15, 25, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
     mapa4 = createMap(20, 30, 5, 5, 100, 25, "img/ladrillo_rojo.jpg", grupoJuego);
