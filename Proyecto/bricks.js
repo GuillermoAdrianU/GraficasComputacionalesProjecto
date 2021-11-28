@@ -199,7 +199,7 @@ function crearPelota(mesh){
             if(vely == 0){
                 vely = -1;
             }
-            vely = -5 // pruebas -> eliminar
+            randomVel();
             flagBrick = false
 
         }
@@ -208,25 +208,29 @@ function crearPelota(mesh){
             if(vely == 0){
                 vely = 1;
             }
-            vely = 5 // pruebas -> eliminar
+            randomVel();
             flagPlayer = false
         }
 
         if(flagWall) {
-            velz = -1 * velz; // pruebas -> eliminar
+            randomVel();
             flagWall = false;
         }
 
         if(flagUpperWall){
-            vely = -5; // pruebas -> eliminar
+            randomVel();
+            vely = -1 * getRandomInt(0,3);
+            if(vely == 0){
+                vely = -1;
+            }
             flagUpperWall = false;
         }
         // randomVel();
         console.log(velx + "    " + vely + "    " + velz)
         ballBody.velocity.set(
-            0 * 2,
+            velz * 2,
             vely * 2,
-            0 * 2
+            velz * 2
         );
     });
     world.addBody(ballBody);
@@ -701,11 +705,11 @@ function createScene(canvas) {
 
 
     //Crea los objetos del juego
-    mapa = createUpperMap(0, 90, 0, 40, 5, 40, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapa2 = createMap(0, 30, 25, 25, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapa3 = createMap(0, 30, -15, 25, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapa4 = createMap(20, 30, 5, 5, 100, 25, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapa5 = createMap(-20, 30, 5, 5, 100, 25, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa = createUpperMap(0, 83, 0, 50, 5, 40, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa2 = createMap(0, 30, 25, 50, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa3 = createMap(0, 30, -15, 50, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa4 = createMap(20, 30, 5, 5, 100, 32, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa5 = createMap(-20, 30, 5, 5, 100, 32, "img/ladrillo_rojo.jpg", grupoJuego);
 
     jugador = createPlayer(5, 1, 5, "img/ladrillo_morado.jpg", grupoJugador);
     
