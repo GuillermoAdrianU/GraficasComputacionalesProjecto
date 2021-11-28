@@ -155,28 +155,46 @@ function crearPelota(mesh){
     ballMesh.position.copy(ballBody.position);
     ballBody.collisionResponse = 0;
     ballBody.addEventListener('collide', function (e) {
-        console.log(e);
+        if(e.contact.bj.brick){
+            flagBrick = true;
+            console.log("funciona")
+            console.log(e.contact.bj.id)
+            let bodyErase = e.contact.bj
+            console.log(bodyErase)
+            bodyErase.brick.visible = false;
+            bodyErase.position.x = 1000
+        }
+        if(e.contact.bj.player){
+            flagPlayer = true;
+            console.log("funciona")
+        }
+
+        console.log(e.contact.bj);
         console.log('Collision!');
         if(flagBrick){
+            console.log("aqui entras?")
             vely = -1 * getRandomInt(0,3);
             if(vely == 0){
                 vely = -1;
             }
+            vely = -5
             flagBrick = false
+
         }
         if(flagPlayer){
             vely = getRandomInt(0,3);
             if(vely == 0){
                 vely = 1;
             }
+            vely = 5
             flagPlayer = false
         }
-        randomVel();
+        // randomVel();
         console.log(velx + "    " + vely + "    " + velz)
         ballBody.velocity.set(
-            velx,
-            vely,
-            velz
+            0 * 2,
+            vely * 2,
+            0 * 2
         );
     });
     world.addBody(ballBody);
@@ -343,7 +361,7 @@ async function createBricks(Gx, Gy, Gz, x, y, z, url, grupo) {
             (box.max.y - box.min.y) / 2,
             (box.max.z - box.min.z) / 2
         ));
-        let body = new CANNON.Body({mass:1});
+        let body = new CANNON.Body({mass:5});
         const posx = brick.position.x
         const posy = brick.position.y + 48
         const posz = brick.position.z
@@ -363,7 +381,6 @@ async function createBricks(Gx, Gy, Gz, x, y, z, url, grupo) {
 async function createMap(Gx, Gy, Gz, x, y, z, url, grupo) {
     try {
         const map = await createRectangleMap(x, y, z, url);
-        console.log("MAP: ", map)
         grupo.add(map);
 
         map.position.set(Gx, Gy, Gz);
@@ -376,11 +393,12 @@ async function createMap(Gx, Gy, Gz, x, y, z, url, grupo) {
             (box.max.y - box.min.y) / 2,
             (box.max.z - box.min.z) / 2
         ));
-        let body = new CANNON.Body({mass:1});
+        let body = new CANNON.Body({mass:5});
         body.addShape(shape);
         body.position.copy(map.position);
         body.updateAABB();
         body.map = map;
+        console.log(body)
         world.addBody(body);
 
     } catch (err) {
@@ -622,10 +640,10 @@ function createScene(canvas) {
 
     //Crea los objetos del juego
     mapa = createMap(0, 80, 0, 40, 5, 40, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapa2 = createMap(0, 30, 20, 25, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapa3 = createMap(0, 30, -10, 25, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapa4 = createMap(15, 30, 5, 5, 100, 25, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapa5 = createMap(-15, 30, 5, 5, 100, 25, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa2 = createMap(0, 30, 25, 25, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa3 = createMap(0, 30, -15, 25, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa4 = createMap(20, 30, 5, 5, 100, 25, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa5 = createMap(-20, 30, 5, 5, 100, 25, "img/ladrillo_rojo.jpg", grupoJuego);
 
     jugador = createPlayer(5, 1, 5, "img/ladrillo_morado.jpg", grupoJugador);
     
