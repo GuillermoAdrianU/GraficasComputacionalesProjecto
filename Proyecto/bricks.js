@@ -12,6 +12,10 @@ let renderer = null,
     scene = null,
     camera = null,
     mapa = null,
+    mapa2 = null,
+    mapa3 = null,
+    mapa4 = null,
+    mapa5 = null,
     //Controles
     orbitControls = null,
     //Luces
@@ -272,14 +276,16 @@ async function createRectangle(x, y, z, url) {
 }
 
 //Funcion para crear el rectangulo
-async function createRectangleMap(x, y, z) {
+async function createRectangleMap(x, y, z, url) {
     return new Promise(async (resolve) => {
+
+        // Textura del ladrillo
+        const textureUrl = url;
+        const texture = new THREE.TextureLoader().load(textureUrl);
+        const material = new THREE.MeshPhongMaterial({ map: texture });
 
         //Geometria del ladrillo
         let geometry = new THREE.BoxGeometry(x, y, z);
-
-        //Se crea el material
-        var material = new THREE.MeshLambertMaterial({color: 0x0000ff, transparent: true, opacity: 0.5});
 
         //Se crea el objeto 
         let map = new THREE.Mesh(geometry, material);
@@ -354,10 +360,10 @@ async function createBricks(Gx, Gy, Gz, x, y, z, url, grupo) {
     }
 }
 
-async function createMap(Gx, Gy, Gz, x, y, z, grupo) {
+async function createMap(Gx, Gy, Gz, x, y, z, url, grupo) {
     try {
-        const map = await createRectangleMap(x, y, z, grupo);
-        console.log(map)
+        const map = await createRectangleMap(x, y, z, url);
+        console.log("MAP: ", map)
         grupo.add(map);
 
         map.position.set(Gx, Gy, Gz);
@@ -615,7 +621,11 @@ function createScene(canvas) {
 
 
     //Crea los objetos del juego
-    mapa = createMap(50, 50, 50, grupoJuego);
+    mapa = createMap(0, 80, 0, 40, 5, 40, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa2 = createMap(0, 30, 20, 25, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa3 = createMap(0, 30, 20, 25, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa4 = createMap(0, 30, 20, 25, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa5 = createMap(0, 30, 20, 25, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
 
     jugador = createPlayer(5, 1, 5, "img/ladrillo_morado.jpg", grupoJugador);
     
