@@ -623,9 +623,9 @@ function createScene(canvas) {
     //Crea los objetos del juego
     mapa = createMap(0, 80, 0, 40, 5, 40, "img/ladrillo_rojo.jpg", grupoJuego);
     mapa2 = createMap(0, 30, 20, 25, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapa3 = createMap(0, 30, 20, 25, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapa4 = createMap(0, 30, 20, 25, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapa5 = createMap(0, 30, 20, 25, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa3 = createMap(0, 30, -10, 25, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa4 = createMap(15, 30, 5, 5, 100, 25, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa5 = createMap(-15, 30, 5, 5, 100, 25, "img/ladrillo_rojo.jpg", grupoJuego);
 
     jugador = createPlayer(5, 1, 5, "img/ladrillo_morado.jpg", grupoJugador);
     
