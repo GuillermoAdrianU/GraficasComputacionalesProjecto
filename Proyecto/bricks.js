@@ -834,7 +834,7 @@ async function eliminarVida(){
     if(vidas == 0){
         window.location="perder.html";
     }
-
+    flagBottomWall = false;
     return vidas
 }
 
