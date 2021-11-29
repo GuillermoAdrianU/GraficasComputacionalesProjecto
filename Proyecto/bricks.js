@@ -36,7 +36,7 @@ let renderer = null,
     powerUpsList = []
 //Variables
 //Vidas del jugador
-let vidas = 3;
+let vidas = 1;
 let Gx = null;
 let Gy = null;
 let Gz = null;
@@ -113,36 +113,37 @@ function onProgress(xhr) {
     }
 }
 
+//Funcion para calcular la velocidad
 function randomVel(){
     if(velz >= 0 || velz <= 0){
         if(velz == 0){
-            velz = getRandomInt(0,3);
+            velz = getRandomInt(2,4);
         }
         else {
             if(velz > 0){
-                velz = -1 * getRandomInt(0,3);
+                velz = -1 * getRandomInt(2,4);
             }
             else{
-                velz = getRandomInt(0,3);
+                velz = getRandomInt(2,4);
             }
         }
     }
     if(velx >= 0 || velx <= 0){
         if(velx == 0){
-            velx = getRandomInt(0,3);
+            velx = getRandomInt(2,4);
         }
         else {
             if(velx > 0){
-                velx = -1 * getRandomInt(0,3);
+                velx = -1 * getRandomInt(2,4);
             }
             else{
-                velx = getRandomInt(0,3);
+                velx = getRandomInt(2,4);
             }
         }
     }
 }
 
-//Funcion para cargar los objetos mtl
+//Funcion para cargar los objetos mtl y sus cajas 
 async function loadObjMtl(objModelUrl, objectList, Gx, Gy, Gz, grupo, Ex, Ey, Ez) {
     console.log("CargaMtl: ", objModelUrl)
     console.log("Entra a carga objetos")
@@ -433,6 +434,7 @@ async function createRectangleMap(x, y, z, url) {
     })
 }
 
+//Funcion que crea al jugador con su caja 
 async function createPlayer(x, y, z, url, grupo) {
     try {
         const player = await createRectangle(x, y, z, url, grupo);
@@ -466,6 +468,7 @@ async function createPlayer(x, y, z, url, grupo) {
     }
 }
 
+//Funcion que crea las cajas para colisiones de los ladrillos
 async function createBricks(Gx, Gy, Gz, x, y, z, url, grupo) {
     try {
         const brick = await createRectangle(x, y, z, url, grupo);
@@ -500,6 +503,7 @@ async function createBricks(Gx, Gy, Gz, x, y, z, url, grupo) {
     }
 }
 
+//Funcion que crea las paredes del mapa
 async function createMap(Gx, Gy, Gz, x, y, z, url, grupo) {
     try {
         const wall = await createRectangleMap(x, y, z, url);
@@ -530,6 +534,8 @@ async function createMap(Gx, Gy, Gz, x, y, z, url, grupo) {
     }    
 }
 
+
+//Funcion que crea la tapa del mapa
 async function createUpperMap(Gx, Gy, Gz, x, y, z, url, grupo) {
     try {
         const upperWall = await createRectangleMap(x, y, z, url);
@@ -598,8 +604,8 @@ function getRandomInt(min, max) {
 
 //Funcion que mueve al jugador
 async function movePlayer(player) {
-    let speedX = 0.0001
-    let speedZ = 0.0001
+    let speedX = 0.001
+    let speedZ = 0.001
 
     document.addEventListener("keydown", onDocumentKeyDown, false);
     function onDocumentKeyDown(event) {
@@ -663,8 +669,8 @@ async function movePlayer(player) {
 
 //Funcion que mueve al jugador
 async function moveCamera(camera) {
-    let speedX = 0.0001
-    let speedZ = 0.0001
+    let speedX = 0.001
+    let speedZ = 0.001
 
     document.addEventListener("keydown", onDocumentKeyDown, false);
     function onDocumentKeyDown(event) {
@@ -712,6 +718,8 @@ async function moveCamera(camera) {
     };
 }
 
+
+//Funcion que dibuja el powerUP
 async function createPowerObj(obj, size) {
     return new Promise(async (resolve) => {
         let x = 0;
@@ -725,21 +733,23 @@ async function createPowerObj(obj, size) {
     })
 }
 
+//Funcion que crea los powerups con probablidad
 async function createPowerUp(){
     let k = getRandomInt(0,101)
     console.log("K: ", k)
-    if (k > 0 && k < 36){
+    if (k > 0 && k < 6){
         console.log("Entro al hongo")
         hongo = await createPowerObj(objMtlModelUrlPower1, 0.3)        
-    } else if(k > 35 && k < 71) {
+    } else if(k > 5 && k < 11) {
         console.log("Entro al medical")
         let medical = await createPowerObj(objMtlModelUrlPower2 , 0.3)
-    } else if(k > 70 && k < 101) {
+    } else if(k > 10 && k < 16) {
         console.log("Entro al multiball")
         let esferas = await createPowerObj(objMtlModelUrlPower3, 0.001)
     }
 }
 
+//Funcion que activa el powerup 1
 async function powerUp1(){    
     let powerUp = grupoPowerBox.pop();
     let mesh = powerUpsList.pop();
@@ -763,6 +773,8 @@ async function powerUp1(){
 
 }
 
+
+//Funcion que activa el powerup2
 async function powerUp2(){
     let powerUp = grupoPowerBox.pop();
     let mesh = powerUpsList.pop();
@@ -774,6 +786,7 @@ async function powerUp2(){
     vidas += 1   
 }
 
+//Funcion quue activa el powerup 3
 async function powerUp3(){
     let powerUp = grupoPowerBox.pop();
     let mesh = powerUpsList.pop();
@@ -802,9 +815,10 @@ async function powerUp3(){
 
 }
 
+//Funcion que se encarga de eliminar las vidas
 async function eliminarVida(){
     vidas -= 1;
-
+    
     pelota = balls.pop();
     let meshes = ballMeshes.pop()
     meshes.visible = false;
@@ -815,6 +829,11 @@ async function eliminarVida(){
     world.removeBody(jugadorID)
 
     jugador = createPlayer(5, 1, 5, "img/ladrillo_morado.jpg", grupoJugador);
+    console.log("VIDAS:", vidas)
+
+    if(vidas == 0){
+        window.location="perder.html";
+    }
 
     return vidas
 }
@@ -891,12 +910,12 @@ function createScene(canvas) {
 
 
     //Crea los objetos del juego
-    mapa = createUpperMap(0, 83, 0, 50, 2, 40, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapa2 = createMap(0, 30, 25, 50, 100, 2, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapa3 = createMap(0, 30, -15, 50, 100, 2, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapa4 = createMap(20, 30, 5, 2, 100, 32, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapa5 = createMap(-20, 30, 5, 2, 100, 32, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapadown = createDownMap(0, -30, 0, 50, 1, 50, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa = createUpperMap(0, 82, 0, 50, 2, 50, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa2 = createMap(0, 30, 20, 50, 100, 2, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa3 = createMap(0, 30, -10, 50, 100, 2, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa4 = createMap(14, 30, 5, 2, 100, 27, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa5 = createMap(-14, 30, 5, 2, 100, 27, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapadown = createDownMap(0, -21, 0, 100, 1, 100, "img/ladrillo_rojo.jpg", grupoJuego);
 
     jugador = createPlayer(5, 1, 5, "img/ladrillo_morado.jpg", grupoJugador);
     

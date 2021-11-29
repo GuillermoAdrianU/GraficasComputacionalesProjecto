@@ -1,0 +1,73 @@
+header {
+    position: absolute;
+    background-color: purple;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 10%;
+    color: white;
+}
+
+footer {
+    background-color: purple;
+    position: absolute;
+    bottom: 00;
+    width: 100%;
+    height: 15%;
+}
+
+main {
+    position: absolute;
+    top: 10%;
+    width: 100%;
+    height: 75%
+}
+
+#info {
+    float: left;
+    width: 100%;
+}
+
+#creadores {
+    width: 40%;
+    float: left;
+    color: white;
+    text-align: center;
+}
+
+#clase {
+    width: 30%;
+    float: left;
+    color: white;
+    text-align: center;
+}
+
+#datos {
+    width: 20%;
+    float: left;
+    color: white;
+    text-align: center;
+}
+
+#title {
+    float: left;
+    width: 40%;
+    padding-left: 10px;
+    font-size: 15px;
+}
+
+.texto {
+    text-align: center;
+    font-size: 100px;
+}
+
+.boton {
+    margin-left: 45%;
+    height: 50px;
+    width: 80spx;  
+}
+
+
+
+
+
