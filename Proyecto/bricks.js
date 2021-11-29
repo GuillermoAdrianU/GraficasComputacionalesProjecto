@@ -16,6 +16,7 @@ let renderer = null,
     mapa3 = null,
     mapa4 = null,
     mapa5 = null,
+    mapadown = null,
     hongo = null,
     //Controles
     orbitControls = null,
@@ -64,16 +65,24 @@ const balls = [];
 const ballMeshes = [];
 const boxes = [];
 const boxMeshes = [];
+let ballErase = [];
+let playerBox = null;
+let playerMesh = null;
 
 //colisiones
 let flagBrick = false;
 let flagPlayer = false;
 let flagWall = false;
-let flagUpperWall = false
+let flagUpperWall = false;
+let flagBottomWall = false;
+let flagMultiBall = false;
+let flagPowerUp = false;
+let powerIndex = 0;
 let vely = 0;
 let velx = 0;
 let velz = 0;
 let bodyErase = null;
+let jugadorID = null;
 
 
 
@@ -151,12 +160,15 @@ async function loadObjMtl(objModelUrl, objectList, Gx, Gy, Gz, grupo, Ex, Ey, Ez
             }
         });
         console.log("ObjMtl: ", object)
-        object.position.set(Gx, Gy, Gz);
+        if(objModelUrl == objMtlModelUrlPower1){
+            object.position.set(Gx + 100, Gy, Gz);
+        } else {
+            object.position.set(Gx, Gy, Gz);
+        }
         object.scale.set(Ex, Ey, Ez);
         objectList.push(object);
         grupo.add(object);
         console.log("Children: ", object.children)
-        let box3js = new THREE.Box3();
         const mesh = new THREE.Mesh(
             new THREE.BoxGeometry(),
             new THREE.MeshBasicMaterial()
@@ -178,15 +190,22 @@ async function loadObjMtl(objModelUrl, objectList, Gx, Gy, Gz, grupo, Ex, Ey, Ez
         console.log("BODY: ", body)
         body.velocity.set(0,-3,0)
         body.addEventListener('collide', function(e){
-            if(e.contact.bj.player){
-                if(objModelUrl == objMtlModelUrlPower1){
-                    powerUp1()
-                } else if(objModelUrl == objMtlModelUrlPower2) {
-                    powerUp2()
-                } else {
-                    powerUp3()
+            if(flagPowerUp && powerIndex == 1){
+                if(e.contact.bi.player){
+                    if(objModelUrl == objMtlModelUrlPower1){
+                        powerUp1()
+                    } else if(objModelUrl == objMtlModelUrlPower2) {
+                        powerUp2()
+                    } else {
+                        powerUp3()
+                    }
                 }
             }
+            if(flagPowerUp == false && powerIndex == 0){
+                flagPowerUp = true;
+            }
+            powerIndex += 1;
+            console.log(e.contact.bi)
         })
         powerUpsList.push(object)
         grupoPowerBox.push(body)
@@ -200,23 +219,34 @@ async function loadObjMtl(objModelUrl, objectList, Gx, Gy, Gz, grupo, Ex, Ey, Ez
 
 
 //Crea la pelota
-function crearPelota(mesh){
-    console.log("Mesh: ", mesh)
+function crearPelota(){
+    // console.log("Mesh: ", mesh)
     let material = new THREE.MeshLambertMaterial();
-    console.log("Material: ", material);
+    // console.log("Material: ", material);
     new THREE.Mesh(material)
     const ballShape = new CANNON.Sphere(0.2);
     const ballGeometry = new THREE.SphereBufferGeometry(ballShape.radius, 32, 32);
     const ballBody = new CANNON.Body({ mass: 1 });
     ballBody.addShape(ballShape);
     const ballMesh = new THREE.Mesh(ballGeometry, material);
+    if(flagMultiBall){
+        ballErase.push(balls)
+    }
     balls.push(ballBody);
     ballMeshes.push(ballMesh);
-    ballBody.velocity.set(
-        0 * 2,
-        -2 * 2,
-        0 * 2
-    );
+    if(flagMultiBall){
+        ballBody.velocity.set(
+            0 * 2,
+            2 * 2,
+            0 * 2
+        );
+    } else {
+        ballBody.velocity.set(
+            0 * 2,
+            -2 * 2,
+            0 * 2
+        );
+    }
     ballBody.position.set(0, 15, 0);
     ballMesh.position.copy(ballBody.position);
     ballBody.collisionResponse = 0;
@@ -255,13 +285,23 @@ function crearPelota(mesh){
             console.log("arriba")
         }
 
+        if(e.contact.bj.bottomWall){
+            if(flagMultiBall){
+                console.log("no debe de morir")
+            } else {
+                console.log("muere")
+                flagBottomWall = true;
+                eliminarVida()
+            }
+        }
+
         // console.log(e.contact);
         // console.log('Collision!');
         if(flagBrick){
             // console.log("aqui entras?")
             vely = -1 * getRandomInt(0,3);
-            if(vely == 0){
-                vely = -1;
+            if(vely < 3){
+                vely = -3;
             }
             randomVel();
             createPowerUp();
@@ -270,8 +310,8 @@ function crearPelota(mesh){
         }
         if(flagPlayer){
             vely = getRandomInt(0,3);
-            if(vely == 0){
-                vely = 1;
+            if(vely < 3){
+                vely = 3;
             }
             randomVel();
             flagPlayer = false
@@ -285,8 +325,8 @@ function crearPelota(mesh){
         if(flagUpperWall){
             randomVel();
             vely = -1 * getRandomInt(0,3);
-            if(vely == 0){
-                vely = -1;
+            if(vely < 3){
+                vely = -3;
             }
             flagUpperWall = false;
         }
@@ -294,7 +334,7 @@ function crearPelota(mesh){
         console.log(velx + "    " + vely + "    " + velz)
         ballBody.velocity.set(
             velz * 2,
-            vely * 2 * 5,
+            vely * 3,
             velz * 2
         );
     });
@@ -324,6 +364,9 @@ function update() {
 
     movePlayer(grupoJugador);
     moveCamera(camera);
+    if(flagBottomWall){
+        camera.position.set(0, -1, 0)
+    }
     world.step(timeStep, dt)
     for (let i = 0; i < balls.length; i++) {
         ballMeshes[i].position.copy(balls[i].position)
@@ -334,6 +377,8 @@ function update() {
         powerUpsList[i].position.copy(grupoPowerBox[i].position)
         powerUpsList[i].quaternion.copy(grupoPowerBox[i].quaternion)
     }
+
+    playerBox.position.copy(playerMesh.position)
 
     // Spin the cube for next frame
     animate();
@@ -409,6 +454,10 @@ async function createPlayer(x, y, z, url, grupo) {
         body.position.copy(player.position);
         body.updateAABB();
         body.player = player;
+        playerMesh = player;
+        playerBox = body;
+        // console.log("player", player);
+        jugadorID = body;
         world.addBody(body);
 
 
@@ -511,6 +560,36 @@ async function createUpperMap(Gx, Gy, Gz, x, y, z, url, grupo) {
     }    
 }
 
+async function createDownMap(Gx, Gy, Gz, x, y, z, url, grupo) {
+    try {
+        const bottomWall = await createRectangleMap(x, y, z, url);
+        grupo.add(bottomWall);
+
+        bottomWall.position.set(Gx, Gy, Gz);
+        //Se pone el Cannon al objeto
+        let shape = null;
+        bottomWall.geometry.computeBoundingBox();
+        let box = bottomWall.geometry.boundingBox;
+        shape = new CANNON.Box(new CANNON.Vec3(
+            (box.max.x - box.min.x) / 2,
+            (box.max.y - box.min.y) / 2,
+            (box.max.z - box.min.z) / 2
+        ));
+        let body = new CANNON.Body({mass:5});
+        body.addShape(shape);
+        body.position.copy(bottomWall.position);
+        body.updateAABB();
+        body.bottomWall = bottomWall;
+        // body.addEventListener('collide', function(e){
+        //     console.log(e)
+        // })
+        world.addBody(body);
+
+    } catch (err) {
+        return onError(err)
+    }    
+}
+
 function getRandomInt(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
@@ -528,42 +607,55 @@ async function movePlayer(player) {
         // DOWN ARROW
         if (keyCode == 40) {
             player.position.z += speedZ;
+            playerMesh.position.z = player.position.z
         } 
         // UP ARROW
         else if (keyCode == 38) {
             player.position.z -= speedZ;
+            playerMesh.position.z = player.position.z
         } 
         // LEFT ARROW
         else if (keyCode == 37) {
             player.position.x -= speedX;
+            playerMesh.position.x = player.position.x
         } 
         // RIGHT ARROW
         else if (keyCode == 39) {
             player.position.x += speedX;
+            playerMesh.position.x = player.position.x
         } 
         // S
         else if (keyCode == 83) {
             player.position.x += speedX;
             player.position.z -= speedZ;
+            playerMesh.position.x = player.position.x
+            playerMesh.position.z = player.position.z
         } 
         // A
         else if (keyCode == 65) {
             player.position.x -= speedX;
             player.position.z += speedZ;
+            playerMesh.position.x = player.position.x
+            playerMesh.position.z = player.position.z
         } 
         // W
         else if (keyCode == 87) {
             player.position.x -= speedZ;
             player.position.z -= speedX;
+            playerMesh.position.x = player.position.x
+            playerMesh.position.z = player.position.z
         } 
         // S
           else if (keyCode == 68) {
             player.position.x += speedZ;
             player.position.z += speedX;
+            playerMesh.position.x = player.position.x
+            playerMesh.position.z = player.position.z
         } 
         // SPACE
         else if (keyCode == 32) {
             player.position.set(0, 20, 0);
+            playerMesh.position.copy(player.position)
         }
     };
 
@@ -620,7 +712,7 @@ async function moveCamera(camera) {
     };
 }
 
-async function createPowerObj(obj) {
+async function createPowerObj(obj, size) {
     return new Promise(async (resolve) => {
         let x = 0;
         let y = 0;
@@ -628,79 +720,103 @@ async function createPowerObj(obj) {
         x = bodyErase.position.x
         y = bodyErase.position.y
         z = bodyErase.position.z
-        let power = await loadObjMtl(obj, powerUpsList, x, y, z, grupopowerUps, 0.3, 0.3, 0.3)
-        console.log("Power: ", power)
+        let power = await loadObjMtl(obj, powerUpsList, x, y, z, grupopowerUps, size, size, size)
         resolve(power)
     })
 }
 
 async function createPowerUp(){
     let k = getRandomInt(0,101)
-    let shape = null;
     console.log("K: ", k)
     if (k > 0 && k < 36){
         console.log("Entro al hongo")
-        hongo = await createPowerObj(objMtlModelUrlPower1)
-        console.log("Hongo: ",hongo)
-        
+        hongo = await createPowerObj(objMtlModelUrlPower1, 0.3)        
     } else if(k > 35 && k < 71) {
         console.log("Entro al medical")
-        let medical = await createPowerObj(objMtlModelUrlPower2)
-        console.log("Medical: ",medical)
+        let medical = await createPowerObj(objMtlModelUrlPower2 , 0.3)
     } else if(k > 70 && k < 101) {
         console.log("Entro al multiball")
-        let esferas = await createPowerObj(objMtlModelUrlPower3)
-        console.log("Esferas: ",esferas)
+        let esferas = await createPowerObj(objMtlModelUrlPower3, 0.001)
     }
 }
 
-async function powerUp1(jugador){
-
+async function powerUp1(){    
+    let powerUp = grupoPowerBox.pop();
+    let mesh = powerUpsList.pop();
+    powerUp.visible = false;
+    world.removeBody(powerUp)
+    mesh.position.x = 100
     //Duplica el tamaño del jugador
-    jugador.x = jugador.x * 2
-    jugador.z = jugador.z * 2
+    jugadorID.player.visible = false;
+    world.removeBody(jugadorID)
+
+    jugador = createPlayer(5 * 2, 1, 5 * 2, "img/ladrillo_morado.jpg", grupoJugador);
 
     //Esperar 10 segundos
     await delay(10)
 
     //Regresa al tamaño original
-    jugador.x = jugador.x / 2
-    jugador.z = jugador.z / 2
+    jugadorID.player.visible = false;
+    world.removeBody(jugadorID)
+
+    jugador = createPlayer(5, 1, 5, "img/ladrillo_morado.jpg", grupoJugador);
 
 }
 
-async function powerUp2(vidas){
+async function powerUp2(){
+    let powerUp = grupoPowerBox.pop();
+    let mesh = powerUpsList.pop();
+    powerUp.visible = false;
+    world.removeBody(powerUp)
+    mesh.position.x = 100
+    console.log("espero ver",powerUp)
+
     vidas += 1   
-    return vidas
 }
 
-async function powerUp3(grupo){
+async function powerUp3(){
+    let powerUp = grupoPowerBox.pop();
+    let mesh = powerUpsList.pop();
+    powerUp.visible = false;
+    world.removeBody(powerUp)
+    mesh.position.x = 100
     // Crea las nuevas pelotas
-    let pelota2 = loadObjMtl(pelota, powerUpsList, 0, 25, 0, grupoPelotas, 0.01, 0.01, 0.01);
-    crearPelota(pelota2)
-    let pelota3 = loadObjMtl(pelota, powerUpsList, 0, 25, 0, grupoPelotas, 0.01, 0.01, 0.01);
-    crearPelota(pelota3)
-
-    // Agregar las pelotas al grupo
-    grupo.add(pelota2)
-    grupo.add(pelota3)
+    flagMultiBall = true;
+    crearPelota()
+    crearPelota()
 
     //Espera 10 segundos
     await delay(10)
-
-    // Remover las pelotas del grupo
-    grupo.remove(pelota2)
-    grupo.remove(pelota3)
+    console.log(ballErase)
+    flagMultiBall = false;
+    for (let i = 0; i < 3; i++) {
+        let pelota = balls.pop()
+        let meshes = ballMeshes.pop()
+        meshes.visible = false;
+        console.log(meshes)
+        world.removeBody(pelota);
+    }
+    crearPelota(dddd)
+    ballErase.pop();
+    ballErase.pop();
 
 }
 
-async function eliminarVida(vidas){
-    vidas -= 1
+async function eliminarVida(){
+    vidas -= 1;
+
+    pelota = balls.pop();
+    let meshes = ballMeshes.pop()
+    meshes.visible = false;
+    world.removeBody(pelota)
+    crearPelota()
+    
+    jugadorID.player.visible = false;
+    world.removeBody(jugadorID)
+
+    jugador = createPlayer(5, 1, 5, "img/ladrillo_morado.jpg", grupoJugador);
+
     return vidas
-}
-
-async function colisiones() {
-
 }
 
 //Funcion para crear la Scena
@@ -775,15 +891,16 @@ function createScene(canvas) {
 
 
     //Crea los objetos del juego
-    mapa = createUpperMap(0, 83, 0, 50, 5, 40, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapa2 = createMap(0, 30, 25, 50, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapa3 = createMap(0, 30, -15, 50, 100, 5, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapa4 = createMap(20, 30, 5, 5, 100, 32, "img/ladrillo_rojo.jpg", grupoJuego);
-    mapa5 = createMap(-20, 30, 5, 5, 100, 32, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa = createUpperMap(0, 83, 0, 50, 2, 40, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa2 = createMap(0, 30, 25, 50, 100, 2, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa3 = createMap(0, 30, -15, 50, 100, 2, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa4 = createMap(20, 30, 5, 2, 100, 32, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapa5 = createMap(-20, 30, 5, 2, 100, 32, "img/ladrillo_rojo.jpg", grupoJuego);
+    mapadown = createDownMap(0, -30, 0, 50, 1, 50, "img/ladrillo_rojo.jpg", grupoJuego);
 
     jugador = createPlayer(5, 1, 5, "img/ladrillo_morado.jpg", grupoJugador);
     
-    crearPelota(pelota)
+    crearPelota()
     //Crear los 125 ladrillos para romper
     let Gx = -10,
         Gy = 10,
